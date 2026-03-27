@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "name": "คอนโด The Reserve ห้อง 2102",
+    "type": "condo",
+    "price": 4500000,
+    "status": "available",
+    "createdAt": "2026-03-27T08:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "บ้านเดี่ยว ซอยลาดพร้าว 41",
+    "type": "house",
+    "price": 8900000,
+    "status": "reserved",
+    "createdAt": "2026-03-27T08:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "name": "ที่ดิน 2 ไร่ นนทบุรี",
+    "type": "land",
+    "price": 12000000,
+    "status": "available",
+    "createdAt": "2026-03-27T08:00:00.000Z"
+  }
+]

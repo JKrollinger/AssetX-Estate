@@ -11,7 +11,7 @@ This file provides guidance for AI assistants (Claude Code and others) working o
 > README (Thai): "เพื่อสร้างกระบวนการทำงานอสังหาริมทรัพย์"
 > Translation: "To create a real estate workflow/process system"
 
-The project is in its **initial stage** — no source code, dependencies, or infrastructure have been set up yet. This CLAUDE.md will be updated as the codebase evolves.
+The first feature implemented is a **daily notification system** that sends summaries via LINE Notify and a web dashboard.
 
 ---
 
@@ -19,15 +19,88 @@ The project is in its **initial stage** — no source code, dependencies, or inf
 
 ```
 AssetX-Estate/
-├── .git/
-├── CLAUDE.md        (this file)
+├── data/
+│   ├── appointments.json   ← seed data (นัดหมาย)
+│   ├── properties.json     ← seed data (อสังหาริมทรัพย์)
+│   └── tasks.json          ← seed data (งาน)
+├── src/
+│   ├── index.js            ← entry point
+│   ├── scheduler.js        ← cron jobs (node-cron)
+│   ├── notifiers/
+│   │   └── line.js         ← LINE Notify API client
+│   ├── services/
+│   │   ├── dailySummary.js ← สรุปงานประจำวัน
+│   │   ├── propertyReport.js ← รายงานอสังหาริมทรัพย์
+│   │   └── reminders.js    ← แจ้งเตือนนัดหมาย
+│   ├── store/
+│   │   └── db.js           ← JSON file-based data store
+│   └── web/
+│       ├── server.js       ← Express API + SSE server
+│       └── public/
+│           └── index.html  ← Web dashboard UI
+├── .env.example
+├── .gitignore
+├── CLAUDE.md               (this file)
+├── package.json
 └── README.md
 ```
 
-- No package manager or language/framework chosen yet
-- No CI/CD, Docker, or deployment configuration
-- No database schema or API design
-- One commit in history: "Initial commit" (2026-03-09)
+### Tech Stack
+
+- **Runtime**: Node.js ≥ 18
+- **Framework**: Express 4
+- **Scheduler**: node-cron 3
+- **Notifications**: LINE Notify API, Server-Sent Events (SSE)
+- **Storage**: JSON files in `data/` (no database yet)
+- **Dependencies**: axios, dotenv, express, node-cron
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and fill in values:
+
+| Variable | Description |
+|---|---|
+| `LINE_NOTIFY_TOKEN` | Token จาก https://notify-bot.line.me/my/ |
+| `PORT` | Port ของ web server (default: 3000) |
+| `TZ` | Timezone (default: Asia/Bangkok) |
+
+### Running the Project
+
+```bash
+npm install
+cp .env.example .env   # แล้วแก้ไข LINE_NOTIFY_TOKEN
+npm start              # หรือ npm run dev (ใช้ nodemon)
+```
+
+Dashboard จะพร้อมใช้งานที่ `http://localhost:3000`
+
+### Cron Schedule (Asia/Bangkok)
+
+| เวลา | วัน | งาน |
+|------|-----|-----|
+| 08:00 | ทุกวัน | สรุปงาน + ตารางนัดหมาย |
+| 09:00 | จ–ศ | รายงานอสังหาริมทรัพย์ |
+| ทุก 30 นาที | ทุกวัน | ตรวจสอบนัดหมายที่ใกล้ถึง |
+| 17:30 | จ–ศ | สรุปปิดวัน |
+
+### API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/` | Web dashboard |
+| GET | `/events` | SSE stream |
+| GET/POST/PUT/DELETE | `/api/tasks` | จัดการงาน |
+| GET/POST/PUT/DELETE | `/api/properties` | จัดการอสังหาริมทรัพย์ |
+| GET/POST/PUT/DELETE | `/api/appointments` | จัดการนัดหมาย |
+| GET | `/api/notify/summary` | ส่งสรุปทันที |
+
+### Data Store
+
+`src/store/db.js` exports: `read(name)`, `write(name, data)`, `add(name, item)`, `update(name, id, changes)`, `remove(name, id)`
+
+- Data files live in `data/<name>.json`
+- IDs are `Date.now()` integers
+- All items get `createdAt`; updates add `updatedAt`
 
 ---
 
@@ -96,18 +169,19 @@ Always ask the user before:
 
 ---
 
-## Planned Domain: Real Estate Workflow
+## Domain: Real Estate Workflow
 
-Based on the README, this system is intended to manage real estate processes. Likely domain concepts include:
+Implemented entities:
 
-- **Properties** — listings, units, land parcels
-- **Transactions** — sales, rentals, leases
-- **Agents / Brokers** — user roles and assignments
-- **Clients / Leads** — contact and CRM data
-- **Documents** — contracts, title deeds, inspections
-- **Workflow stages** — inquiry → viewing → offer → contract → closing
+- **Tasks** (`data/tasks.json`) — งาน/to-do รายวัน, มี `title`, `dueDate`, `status` (pending/done)
+- **Properties** (`data/properties.json`) — อสังหาริมทรัพย์, มี `name`, `type`, `price`, `status` (available/reserved/sold/rented/maintenance)
+- **Appointments** (`data/appointments.json`) — นัดหมาย, มี `title`, `datetime`, `location`, `note`, `done`
 
-These are inferred from the project name and description. Confirm with the user before building any of these.
+Planned (not yet built):
+- Agents / Brokers — user roles
+- Clients / Leads — CRM data
+- Documents — contracts, title deeds
+- Transaction workflow — inquiry → viewing → offer → contract → closing
 
 ---
 
